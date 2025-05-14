@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Muestras de Proceso 2025 | Musicala</title>
+
+  <!-- Google Fonts: Roboto -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Extendemos Tailwind con colores de la marca
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bach: '#220A63',    // Azul Bach
+            mozart: '#0C41C4',  // Azul Mozart
+            haydn: '#E6E8E8',   // Gris Haydn
+            tchaikovsky: '#232323' // Gris Tchaikovsky
+          }
+        },
+        fontFamily: {
+          sans: ['Roboto', 'ui-sans-serif', 'system-ui'],
+        }
+      }
+    }
+  </script>
+
+  <!-- PapaParse para CSV robusto -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+</head>
+<body class="flex flex-col min-h-screen font-sans bg-haydn text-tchaikovsky">
+
+  <!-- Header con logo centrado y texto grande -->
+  <header class="bg-bach text-white">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-center px-4 py-8">
+      <!-- Logo horizontal más grande -->
+      <img
+        src="https://static.wixstatic.com/media/85afce_bd35e67e8b7d419181c144ed4272e9b1~mv2.png"
+        alt="Logo Musicala"
+        class="h-16 w-auto mb-4 md:mb-0 md:mr-6"
+      />
+      <div class="text-center md:text-left">
+        <h1 class="text-4xl md:text-5xl font-bold">Muestras de Proceso 2025</h1>
+        <p class="mt-2 text-lg">Observa en tiempo real lo que vamos aprendiendo y creando</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Galería en grid de 1 col (móvil) y 2 cols (md+), centrada y con máximo ancho -->
+  <main class="flex-grow w-full px-4 py-8">
+    <div
+      id="gallery"
+      class="mx-auto grid justify-items-center grid-cols-1 md:grid-cols-2 gap-8"
+      style="max-width: 1440px;"
+    ></div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-sm text-tchaikovsky py-4">
+    Musicala • Carrera 45A #103B-34, Bogotá
+  </footer>
+
+  <script>
+    const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7rAQltRjJN-A9Vajsw1nayO-1gwYUyYZRTW5usePSt_ywTRKoaxVLeEer2lgjLNP5uKY0nXp99Z4U/pub?output=csv';
+
+    function getEmbedUrl(url) {
+      if (!url) return null;
+      let id = null;
+      if (url.includes('youtu.be/')) {
+        id = url.split('youtu.be/')[1].split(/[?&]/)[0];
+      } else if (url.includes('watch?v=')) {
+        id = url.split('watch?v=')[1].split(/[?&]/)[0];
+      }
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+
+    function crearTarjeta(m) {
+      const embedUrl = getEmbedUrl(m['Link']);
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-xl shadow overflow-hidden flex flex-col md:flex-row w-full';
+      card.innerHTML = `
+        <div class="p-6 flex-1">
+          <h2 class="text-2xl font-bold mb-3">${m['Nombre de la muestra']}</h2>
+          <p class="text-base mb-1"><strong>Fecha:</strong> ${m['Fecha']}</p>
+          <p class="text-base mb-1"><strong>Componente:</strong> ${m['Componente']}</p>
+          <p class="text-base mb-4">${m['Descripción']}</p>
+          <p class="text-base text-mozart font-semibold">
+            <strong>Sede:</strong> ${m['Sede']} • <strong>Ciclo:</strong> ${m['Ciclo']}
+          </p>
+        </div>
+        ${embedUrl ? `
+          <div class="flex-1 bg-black/5 md:h-auto">
+            <iframe
+              src="${embedUrl}"
+              class="w-full h-72 md:h-full"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen>
+            </iframe>
+          </div>
+        ` : ''}
+      `;
+      document.getElementById('gallery').appendChild(card);
+    }
+
+    Papa.parse(SHEET_CSV, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: results => {
+        if (!results.data.length) {
+          document.getElementById('gallery').innerHTML =
+            '<p class="text-red-500">No hay muestras para mostrar.</p>';
+          return;
+        }
+        results.data.forEach(crearTarjeta);
+      },
+      error: err => {
+        console.error('Error al parsear CSV:', err);
+        document.getElementById('gallery').innerHTML =
+          '<p class="text-red-500">Error cargando las muestras.</p>';
+      }
+    });
+  </script>
+</body>
+</html>
